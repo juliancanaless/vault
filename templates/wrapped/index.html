@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ year }} Wrapped | The Vault{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Wrapped-specific styles */
+    .wrapped-gradient {
+        background: linear-gradient(135deg, #8a7162 0%, #5f4e46 50%, #3d3330 100%);
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .glow {
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Staggered animations */
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+    .stagger-6 { animation-delay: 0.6s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen wrapped-gradient text-white">
+    <!-- Header -->
+    <header class="px-6 py-4 flex items-center justify-between">
+        <a href="{% url 'daily_journal' %}" class="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span class="text-sm font-medium">Back</span>
+        </a>
+        <div class="w-16"></div>
+    </header>
+    
+    <main class="px-6 pb-16 max-w-lg mx-auto">
+        <!-- Hero -->
+        <section class="text-center py-12 animate-fade-in">
+            <p class="text-white/60 text-sm uppercase tracking-widest mb-4">The Vault</p>
+            <h1 class="font-serif text-5xl md:text-6xl font-bold mb-4">{{ year }}</h1>
+            <p class="text-xl text-white/80">Wrapped</p>
+            
+            <!-- Couple names -->
+            <div class="mt-8 flex items-center justify-center gap-4">
+                <div class="text-center">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-white/20 flex items-center justify-center mb-2 glow">
+                        {% if wrapped.user.profile.avatar %}
+                        <img src="{{ wrapped.user.profile.avatar.url }}" class="w-full h-full rounded-full object-cover">
+                        {% else %}
+                        <span class="text-xl font-medium">{{ wrapped.user.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-white/70">{{ wrapped.user.profile.name }}</p>
+                </div>
+                <div class="text-2xl">💕</div>
+                <div class="text-center">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-white/20 flex items-center justify-center mb-2 glow">
+                        {% if wrapped.partner.profile.avatar %}
+                        <img src="{{ wrapped.partner.profile.avatar.url }}" class="w-full h-full rounded-full object-cover">
+                        {% else %}
+                        <span class="text-xl font-medium">{{ wrapped.partner.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-white/70">{{ wrapped.partner.profile.name }}</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Stats Grid -->
+        <section class="space-y-4 mb-12">
+            <!-- Total Words -->
+            <div class="stat-card rounded-2xl p-6 text-center animate-slide-up stagger-1">
+                <p class="text-5xl font-serif font-bold mb-2">{{ wrapped.total_words|default:"0" }}</p>
+                <p class="text-white/70">words written together</p>
+            </div>
+            
+            <!-- Response Rate -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="stat-card rounded-2xl p-6 text-center animate-slide-up stagger-2">
+                    <p class="text-3xl font-serif font-bold mb-1">
+                        {% widthratio wrapped.response_rate|default:0 1 100 %}%
+                    </p>
+                    <p class="text-sm text-white/70">response rate</p>
+                </div>
+                
+                {% if wrapped.sync_score %}
+                <div class="stat-card rounded-2xl p-6 text-center animate-slide-up stagger-3">
+                    <p class="text-3xl font-serif font-bold mb-1">
+                        {% widthratio wrapped.sync_score 1 100 %}%
+                    </p>
+                    <p class="text-sm text-white/70">emotionally in sync</p>
+                </div>
+                {% else %}
+                <div class="stat-card rounded-2xl p-6 text-center animate-slide-up stagger-3">
+                    <p class="text-3xl font-serif font-bold mb-1">{{ wrapped.shared_joy_count|default:"0" }}</p>
+                    <p class="text-sm text-white/70">joyful moments</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        
+        <!-- Top Vibes -->
+        {% if wrapped.top_vibes %}
+        <section class="mb-12 animate-slide-up stagger-4">
+            <h2 class="font-serif text-2xl mb-6 text-center">Your Top Vibes</h2>
+            <div class="space-y-3">
+                {% for vibe in wrapped.top_vibes %}
+                <div class="stat-card rounded-xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">
+                            {% if vibe.prompt__category == 'wholesome' %}🧸
+                            {% elif vibe.prompt__category == 'lore' %}📜
+                            {% elif vibe.prompt__category == 'chaos' %}🔥
+                            {% elif vibe.prompt__category == 'spicy' %}🌶️
+                            {% elif vibe.prompt__category == 'grind' %}💼
+                            {% elif vibe.prompt__category == 'plot' %}🎬
+                            {% elif vibe.prompt__category == 'intellectual' %}🧠
+                            {% else %}🃏
+                            {% endif %}
+                        </span>
+                        <span class="font-medium capitalize">{{ vibe.prompt__category }}</span>
+                    </div>
+                    <span class="text-white/70">{{ vibe.count }} entries</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+        
+        <!-- Happiest Month -->
+        {% if wrapped.happiest_month %}
+        <section class="mb-12 animate-slide-up stagger-5">
+            <div class="stat-card rounded-2xl p-8 text-center glow">
+                <p class="text-white/60 text-sm uppercase tracking-widest mb-4">Happiest Month</p>
+                <p class="text-4xl font-serif font-bold mb-2">
+                    {{ wrapped.happiest_month.month|date:"F" }}
+                </p>
+                <p class="text-white/70">
+                    Your brightest time together
+                </p>
+            </div>
+        </section>
+        {% endif %}
+        
+        <!-- Relationship Duration -->
+        {% if wrapped.years_together is not None %}
+        <section class="mb-12 animate-slide-up stagger-6">
+            <div class="stat-card rounded-2xl p-8 text-center">
+                <p class="text-white/60 text-sm uppercase tracking-widest mb-4">Together For</p>
+                <div class="flex items-center justify-center gap-6">
+                    <div>
+                        <p class="text-4xl font-serif font-bold">{{ wrapped.years_together }}</p>
+                        <p class="text-sm text-white/70">years</p>
+                    </div>
+                    <div class="text-3xl">•</div>
+                    <div>
+                        <p class="text-4xl font-serif font-bold">{{ wrapped.days_together }}</p>
+                        <p class="text-sm text-white/70">days</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+        
+        <!-- Highlights Section -->
+        <section class="mb-12">
+            <h2 class="font-serif text-2xl mb-6 text-center animate-slide-up">Highlights</h2>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="stat-card rounded-xl p-5 text-center animate-slide-up stagger-1">
+                    <p class="text-3xl mb-1">💕</p>
+                    <p class="text-2xl font-serif font-bold">{{ wrapped.shared_joy_count|default:"0" }}</p>
+                    <p class="text-xs text-white/70 mt-1">Shared Joy</p>
+                </div>
+                
+                <div class="stat-card rounded-xl p-5 text-center animate-slide-up stagger-2">
+                    <p class="text-3xl mb-1">🤝</p>
+                    <p class="text-2xl font-serif font-bold">{{ wrapped.support_moments|default:"0" }}</p>
+                    <p class="text-xs text-white/70 mt-1">Support Moments</p>
+                </div>
+                
+                <div class="stat-card rounded-xl p-5 text-center animate-slide-up stagger-3">
+                    <p class="text-3xl mb-1">🌧️</p>
+                    <p class="text-2xl font-serif font-bold">{{ wrapped.tough_days_count|default:"0" }}</p>
+                    <p class="text-xs text-white/70 mt-1">Storms Weathered</p>
+                </div>
+                
+                <div class="stat-card rounded-xl p-5 text-center animate-slide-up stagger-4">
+                    <p class="text-3xl mb-1">
+                        {% if wrapped.couple_sentiment %}
+                            {% if wrapped.couple_sentiment >= 0.3 %}☀️
+                            {% elif wrapped.couple_sentiment >= 0 %}⛅
+                            {% else %}🌧️
+                            {% endif %}
+                        {% else %}✨
+                        {% endif %}
+                    </p>
+                    <p class="text-2xl font-serif font-bold">
+                        {% if wrapped.couple_sentiment %}
+                            {% widthratio wrapped.couple_sentiment 1 100 %}%
+                        {% else %}
+                            —
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-white/70 mt-1">Positivity</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Monthly Chart -->
+        {% if wrapped.monthly_sentiment %}
+        <section class="mb-12 animate-slide-up">
+            <h2 class="font-serif text-2xl mb-6 text-center">Your Year in Vibes</h2>
+            <div class="stat-card rounded-2xl p-6">
+                <div class="flex items-end justify-between gap-1 h-32">
+                    {% for month in wrapped.monthly_sentiment %}
+                    <div class="flex-1 flex flex-col items-center">
+                        <div 
+                            class="w-full bg-white/30 rounded-t"
+                            style="height: {% widthratio month.avg_score 1 100 %}%"
+                        ></div>
+                        <p class="text-xs text-white/50 mt-2">{{ month.month|date:"M"|slice:":1" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+        
+        <!-- Footer -->
+        <section class="text-center py-8 animate-fade-in">
+            <p class="text-white/50 text-sm mb-6">Here's to another year of connection 💕</p>
+            <a 
+                href="{% url 'daily_journal' %}"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-white text-stone-800 font-medium rounded-full hover:bg-white/90 transition-colors"
+            >
+                <span>Back to Journal</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
+        </section>
+    </main>
+</div>
+{% endblock %}
+

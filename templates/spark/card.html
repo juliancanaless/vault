@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category_info.name }} | Spark | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <!-- Top Bar with Back + Category -->
+    <div class="px-6 pt-6 pb-2 flex items-center justify-between">
+        <a href="{% url 'spark_index' %}" class="flex items-center gap-2 text-ink-500 hover:text-ink-900 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span class="text-sm font-medium">Back</span>
+        </a>
+        
+        <span class="text-xs font-medium px-3 py-1 rounded-full border border-stone-200
+            {% if category_info.color == 'rose' %}bg-rose-50 text-rose-600
+            {% elif category_info.color == 'violet' %}bg-violet-50 text-violet-600
+            {% elif category_info.color == 'amber' %}bg-amber-50 text-amber-700
+            {% elif category_info.color == 'emerald' %}bg-emerald-50 text-emerald-600
+            {% else %}bg-paper-100 text-ink-500{% endif %}
+        ">
+            {{ category_info.name }}
+        </span>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="flex-1 px-6 pb-8 flex flex-col">
+        <div class="max-w-lg mx-auto w-full flex-1 flex flex-col">
+            <!-- Card Container -->
+            <div id="spark-card" class="flex-1 flex items-center justify-center py-8">
+                {% include 'spark/partials/card.html' %}
+            </div>
+            
+            <!-- Actions -->
+            <div class="pb-4 animate-slide-up" style="animation-delay: 0.2s;">
+                <button 
+                    hx-get="{% url 'spark_next' category %}{% if vibe %}?vibe={{ vibe }}{% endif %}"
+                    hx-target="#spark-card"
+                    hx-swap="innerHTML"
+                    class="w-full py-4 px-6 bg-accent hover:bg-ink-900 text-white font-medium rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                    Next Spark
+                </button>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Add swipe gesture support
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    const cardContainer = document.getElementById('spark-card');
+    
+    cardContainer.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, false);
+    
+    cardContainer.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, false);
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            // Swipe detected - trigger next card
+            htmx.ajax('GET', '{% url "spark_next" category %}{% if vibe %}?vibe={{ vibe }}{% endif %}', {
+                target: '#spark-card',
+                swap: 'innerHTML'
+            });
+        }
+    }
+</script>
+{% endblock %}
+

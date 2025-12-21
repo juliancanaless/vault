@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Spark | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <main class="px-6 pt-8 pb-8 max-w-lg mx-auto">
+        <!-- Title -->
+        <div class="text-center mb-8 animate-fade-in">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 mb-4">
+                <svg class="w-7 h-7 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+            </div>
+            <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">Spark</h1>
+            <p class="text-ink-500">Ideas for moments together</p>
+        </div>
+        
+        {% if total_sparks == 0 %}
+        <!-- Empty state -->
+        <div class="text-center py-12 animate-slide-up">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-paper-100 flex items-center justify-center">
+                <svg class="w-8 h-8 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <h2 class="font-serif text-xl text-ink-900 tracking-tight mb-2">Coming soon</h2>
+            <p class="text-ink-500 text-sm">We're adding sparks to inspire your time together.</p>
+        </div>
+        {% else %}
+        <!-- Category Grid -->
+        <div class="grid grid-cols-2 gap-3 animate-slide-up">
+            {% for cat in categories %}
+            <a 
+                href="{% url 'spark_card' cat.id %}"
+                class="bg-white border border-stone-200 rounded-3xl p-5 relative overflow-hidden group bento-card hover:border-stone-300 hover:shadow-xl hover:shadow-paper-100 {% if cat.count == 0 %}opacity-50 pointer-events-none{% endif %}"
+            >
+                <div class="card-glow"></div>
+                <div class="relative">
+                    <!-- Icon -->
+                    <div class="h-12 w-12 rounded-2xl mb-3 flex items-center justify-center
+                        {% if cat.color == 'rose' %}bg-rose-50 text-rose-500
+                        {% elif cat.color == 'violet' %}bg-violet-50 text-violet-500
+                        {% elif cat.color == 'amber' %}bg-amber-50 text-amber-600
+                        {% elif cat.color == 'emerald' %}bg-emerald-50 text-emerald-500
+                        {% else %}bg-paper-100 text-ink-500{% endif %}
+                    ">
+                        {% if cat.icon == 'heart' %}
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                        {% elif cat.icon == 'chat' %}
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        {% elif cat.icon == 'scale' %}
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
+                        </svg>
+                        {% elif cat.icon == 'puzzle' %}
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Text -->
+                    <h2 class="font-serif text-lg text-ink-900 tracking-tight mb-1">{{ cat.name }}</h2>
+                    <p class="font-sans text-xs text-ink-500">{{ cat.description }}</p>
+                    
+                    <!-- Count badge -->
+                    {% if cat.count > 0 %}
+                    <div class="absolute top-0 right-0">
+                        <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-paper-100 text-ink-500 border border-stone-100">
+                            {{ cat.count }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <!-- Hint text -->
+        <p class="text-center text-ink-500 text-xs mt-8 animate-fade-in" style="animation-delay: 0.3s;">
+            Pick a category, then swipe for inspiration ✨
+        </p>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
+

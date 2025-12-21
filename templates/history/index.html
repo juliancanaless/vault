@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Journal History | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <main class="px-6 pt-8 pb-8 max-w-lg mx-auto">
+        <!-- Title Section -->
+        <div class="text-center mb-8 animate-fade-in">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 mb-4">
+                <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+            </div>
+            <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">History</h1>
+            <p class="text-ink-500">Your story together</p>
+        </div>
+        
+        <!-- Stats Card -->
+        <div class="mb-8 animate-slide-up">
+            <div class="bg-white border border-stone-200 rounded-3xl p-6 text-center shadow-lg shadow-stone-100">
+                <p class="text-5xl font-serif text-accent mb-1">{{ total_entries }}</p>
+                <p class="text-ink-500 text-sm">entries together</p>
+            </div>
+        </div>
+        
+        {% if entries_by_month %}
+        {% for month, entries in entries_by_month.items %}
+        <section class="mb-8 animate-slide-up" style="animation-delay: {{ forloop.counter0|divisibleby:1 }}s;">
+            <h2 class="font-serif text-lg text-ink-900 tracking-tight mb-4 sticky top-0 bg-paper-50 py-2 z-10">{{ month }}</h2>
+            
+            <div class="space-y-3">
+                {% for item in entries %}
+                <a 
+                    href="{% url 'entry_detail' item.user_entry.id %}"
+                    class="block bg-white border border-stone-200 rounded-2xl p-4 relative overflow-hidden group bento-card hover:border-stone-300 hover:shadow-xl hover:shadow-paper-100"
+                >
+                    <div class="card-glow"></div>
+                    <div class="flex items-start justify-between gap-4 relative">
+                        <div class="flex-1 min-w-0">
+                            <!-- Date & Category -->
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs font-medium text-accent uppercase tracking-wider">
+                                    {{ item.prompt.get_category_display }}
+                                </span>
+                                <span class="w-1 h-1 rounded-full bg-stone-300"></span>
+                                <span class="text-xs text-ink-500">
+                                    {{ item.prompt.active_date|date:"M j" }}
+                                </span>
+                            </div>
+                            
+                            <!-- Prompt preview -->
+                            <p class="font-serif text-ink-900 text-sm line-clamp-2 tracking-tight">
+                                "{{ item.prompt.text }}"
+                            </p>
+                            
+                            <!-- Entry preview -->
+                            <p class="font-sans text-ink-500 text-sm mt-2 line-clamp-1">
+                                {{ item.user_entry.text_content|truncatewords:15 }}
+                            </p>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="flex-shrink-0">
+                            {% if item.unlocked %}
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            {% else %}
+                            <div class="w-10 h-10 rounded-xl bg-paper-100 border border-stone-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12 animate-slide-up">
+            <div class="bg-white border border-stone-200 rounded-3xl p-8 shadow-lg shadow-stone-100">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-paper-100 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <h2 class="font-serif text-xl text-ink-900 tracking-tight mb-2">No entries yet</h2>
+                <p class="text-ink-500 text-sm mb-6">Start answering daily prompts to build your story together</p>
+                <a href="{% url 'daily_journal' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-ink-900 text-white font-medium rounded-2xl transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Today's Prompt
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

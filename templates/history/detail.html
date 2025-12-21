@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ prompt.active_date|date:"M j, Y" }} | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <!-- Top Bar with Back + Date -->
+    <div class="px-6 pt-6 pb-2 flex items-center justify-between max-w-lg mx-auto">
+        <a href="{% url 'entry_history' %}" class="flex items-center gap-2 text-ink-500 hover:text-ink-900 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span class="text-sm font-medium">Back</span>
+        </a>
+        
+        <span class="text-xs font-medium px-3 py-1 rounded-full border border-stone-200 bg-emerald-50 text-emerald-600">
+            {{ prompt.active_date|date:"M j, Y" }}
+        </span>
+    </div>
+    
+    <main class="px-6 pb-8 max-w-lg mx-auto">
+        <!-- Date Badge -->
+        <div class="text-center mb-6 animate-fade-in">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-stone-200 shadow-sm">
+                <span class="text-xs font-medium text-accent uppercase tracking-wider">
+                    {{ prompt.get_category_display }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Prompt Card -->
+        <div class="mb-8 animate-slide-up">
+            <div class="bg-white border border-stone-200 rounded-3xl p-8 shadow-lg shadow-stone-100">
+                <p class="font-serif text-2xl text-ink-900 leading-relaxed text-center tracking-tight">
+                    "{{ prompt.text }}"
+                </p>
+            </div>
+        </div>
+        
+        <!-- Entries -->
+        <div class="space-y-4">
+            <!-- User's Entry -->
+            <div class="bg-white border border-stone-200 rounded-3xl overflow-hidden animate-slide-up shadow-lg shadow-stone-100" style="animation-delay: 0.1s;">
+                <div class="px-6 py-4 border-b border-stone-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="You" class="w-full h-full rounded-xl object-cover">
+                        {% else %}
+                        <span class="text-sm font-serif text-violet-600">{{ user.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="font-serif text-sm text-ink-900">You</p>
+                        <p class="text-xs text-ink-500">{{ user_entry.word_count }} words</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="font-serif text-lg text-ink-900 leading-relaxed whitespace-pre-wrap">{{ user_entry.text_content }}</p>
+                    {% if user_entry.photo %}
+                    <div class="mt-4">
+                        <img src="{{ user_entry.photo.url }}" alt="Entry photo" class="rounded-2xl max-h-64 object-cover">
+                    </div>
+                    {% endif %}
+                    {% if user_entry.location_tag %}
+                    <div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-paper-100 rounded-full text-ink-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span class="text-xs">{{ user_entry.location_tag }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Partner's Entry -->
+            {% if unlocked %}
+            <div class="bg-white border-2 border-rose-200 rounded-3xl overflow-hidden animate-slide-up shadow-lg shadow-rose-50" style="animation-delay: 0.2s;">
+                <div class="px-6 py-4 border-b border-rose-100 bg-gradient-to-r from-rose-50 to-pink-50 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
+                        {% if partner.profile.avatar %}
+                        <img src="{{ partner.profile.avatar.url }}" alt="Partner" class="w-full h-full rounded-xl object-cover">
+                        {% else %}
+                        <span class="text-sm font-serif text-rose-600">{{ partner.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="font-serif text-sm text-ink-900">{{ partner.profile.name }}</p>
+                        <p class="text-xs text-ink-500">{{ partner_entry.word_count }} words</p>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="font-serif text-lg text-ink-900 leading-relaxed whitespace-pre-wrap">{{ partner_entry.text_content }}</p>
+                    {% if partner_entry.photo %}
+                    <div class="mt-4">
+                        <img src="{{ partner_entry.photo.url }}" alt="Entry photo" class="rounded-2xl max-h-64 object-cover">
+                    </div>
+                    {% endif %}
+                    {% if partner_entry.location_tag %}
+                    <div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-paper-100 rounded-full text-ink-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span class="text-xs">{{ partner_entry.location_tag }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Locked partner entry -->
+            <div class="bg-white border border-stone-200 rounded-3xl p-8 text-center animate-slide-up shadow-lg shadow-stone-100" style="animation-delay: 0.2s;">
+                <div class="w-12 h-12 mx-auto mb-4 rounded-2xl bg-paper-100 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <p class="text-ink-500 text-sm">{{ partner.profile.name }} hasn't answered this prompt yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

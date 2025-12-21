@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run The Vault locally with Gunicorn.
+#
+# Defaults:
+#   - bind: 127.0.0.1:8000 (aka localhost:8000)
+#   - reload: enabled
+#
+# Overrides (env vars):
+#   HOST=localhost PORT=8000
+#   BIND=0.0.0.0:8000
+#   RELOAD=0  (disable --reload)
+#   APP=vault.wsgi:application
+#
+# Examples:
+#   ./run_gunicorn
+#   HOST=localhost PORT=8001 ./run_gunicorn
+#   RELOAD=0 ./run_gunicorn --workers 2
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+HOST="${HOST:-127.0.0.1}"
+PORT="${PORT:-8000}"
+BIND="${BIND:-$HOST:$PORT}"
+RELOAD="${RELOAD:-1}"
+APP="${APP:-vault.wsgi:application}"
+
+# Prefer the repo venv gunicorn if present.
+if [[ -x "$ROOT/venv/bin/gunicorn" ]]; then
+  GUNICORN_BIN="$ROOT/venv/bin/gunicorn"
+else
+  GUNICORN_BIN="$(command -v gunicorn || true)"
+fi
+
+if [[ -z "${GUNICORN_BIN:-}" ]]; then
+  echo "Error: gunicorn not found."
+  echo "Install deps first: pip install -r requirements.txt"
+  exit 1
+fi
+
+ARGS=("$APP" "--bind" "$BIND")
+if [[ "$RELOAD" == "1" ]]; then
+  ARGS+=("--reload")
+fi
+
+exec "$GUNICORN_BIN" "${ARGS[@]}" "$@"
+
+

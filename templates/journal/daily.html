@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Today's Journal | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <!-- Main Content -->
+    <main class="flex-1 px-6 pt-8 pb-8">
+        <div class="max-w-lg mx-auto">
+            <!-- Title Section -->
+            <div class="text-center mb-8 animate-fade-in">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 mb-4">
+                    <svg class="w-7 h-7 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">Write</h1>
+                <p class="text-ink-500">Your daily reflection</p>
+            </div>
+            
+            <!-- Date Badge -->
+            <div class="text-center mb-6 animate-slide-up">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-stone-200 shadow-sm">
+                    <span class="text-xs font-medium text-accent uppercase tracking-wider">
+                        {{ prompt.get_category_display }}
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-stone-300"></span>
+                    <span class="text-xs text-ink-500">
+                        {{ prompt.active_date|date:"F j" }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Prompt Card -->
+            <div class="mb-8 animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="bg-white border border-stone-200 rounded-3xl p-8 relative overflow-hidden shadow-lg shadow-stone-100">
+                    <p class="font-serif text-2xl md:text-3xl text-ink-900 leading-relaxed text-center tracking-tight">
+                        "{{ prompt.text }}"
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Dynamic State Content -->
+            <div id="journal-state" class="animate-slide-up" style="animation-delay: 0.2s;">
+                {% include 'journal/partials/entry_state.html' %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if state == 'waiting' %}
+<script>
+    // Poll for partner status every 10 seconds when waiting
+    setInterval(function() {
+        htmx.ajax('GET', '{% url "check_partner_status" %}', {
+            target: '#journal-state',
+            swap: 'innerHTML'
+        });
+    }, 10000);
+</script>
+{% endif %}
+{% endblock %}

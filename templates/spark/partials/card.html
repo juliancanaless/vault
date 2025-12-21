@@ -1,0 +1,72 @@
+{% if spark %}
+<div class="w-full animate-fade-in">
+    <div class="bg-white border border-stone-200 rounded-3xl p-8 relative overflow-hidden shadow-lg shadow-stone-100">
+        <!-- Vibe badge -->
+        <div class="flex items-center justify-center mb-6">
+            <span class="text-xs font-medium px-3 py-1 rounded-full bg-paper-100 text-ink-500 border border-stone-100 uppercase tracking-wider">
+                {{ spark.get_vibe_display }}
+            </span>
+        </div>
+        
+        {% if spark.category == 'wyr' %}
+        <!-- Would You Rather layout -->
+        <div class="space-y-6">
+            <div class="text-center">
+                <p class="font-sans text-xs text-ink-500 uppercase tracking-wider mb-4">Would you rather...</p>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Option A -->
+                <div class="p-5 rounded-2xl bg-gradient-to-br from-rose-50 to-amber-50 border border-rose-100">
+                    <p class="font-serif text-xl text-ink-900 leading-relaxed tracking-tight text-center">
+                        {{ spark.text }}
+                    </p>
+                </div>
+                
+                <div class="text-center">
+                    <span class="inline-block px-4 py-1 bg-white rounded-full text-ink-500 text-sm font-medium border border-stone-200">
+                        or
+                    </span>
+                </div>
+                
+                <!-- Option B -->
+                <div class="p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-blue-50 border border-violet-100">
+                    <p class="font-serif text-xl text-ink-900 leading-relaxed tracking-tight text-center">
+                        {{ spark.option_b }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Standard layout for other categories -->
+        <div class="min-h-[200px] flex flex-col items-center justify-center text-center">
+            <p class="font-serif text-2xl md:text-3xl text-ink-900 leading-relaxed tracking-tight">
+                {{ spark.text }}
+            </p>
+            
+            {% if spark.subtitle %}
+            <p class="mt-4 font-sans text-sm text-ink-500">
+                {{ spark.subtitle }}
+            </p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<!-- No spark available -->
+<div class="w-full animate-fade-in">
+    <div class="bg-white border border-stone-200 rounded-3xl p-8 relative overflow-hidden">
+        <div class="min-h-[200px] flex flex-col items-center justify-center text-center">
+            <div class="w-12 h-12 rounded-2xl bg-paper-100 flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <p class="font-serif text-xl text-ink-900 tracking-tight mb-2">No sparks yet</p>
+            <p class="font-sans text-sm text-ink-500">We're adding more ideas for this category soon!</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+

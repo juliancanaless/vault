@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}No Prompt Today | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <!-- Main Content -->
+    <main class="flex-1 px-6 pt-8 pb-8">
+        <div class="max-w-lg mx-auto">
+            <!-- Title Section -->
+            <div class="text-center mb-8 animate-fade-in">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 mb-4">
+                    <svg class="w-7 h-7 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">Write</h1>
+                <p class="text-ink-500">Your daily reflection</p>
+            </div>
+            
+            <!-- Empty State Card -->
+            <div class="animate-slide-up">
+                <div class="bg-white border border-stone-200 rounded-3xl p-8 text-center shadow-lg shadow-stone-100">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-paper-100 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="font-serif text-xl text-ink-900 tracking-tight mb-2">No prompt for today</h2>
+                    <p class="text-ink-500 text-sm mb-6">
+                        Check back tomorrow for your next journal prompt. In the meantime, enjoy your day together!
+                    </p>
+                    <a href="{% url 'spark_index' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-ink-900 text-white font-medium rounded-2xl transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
+                        Explore Sparks
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

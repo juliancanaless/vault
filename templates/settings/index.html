@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <main class="px-6 pt-8 pb-8 max-w-lg mx-auto">
+        <!-- Title Section -->
+        <div class="text-center mb-8 animate-fade-in">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-stone-100 to-stone-200 mb-4">
+                <svg class="w-7 h-7 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">Settings</h1>
+            <p class="text-ink-500">Manage your profile & vault</p>
+        </div>
+
+        {% if messages %}
+        <div class="space-y-2 mb-6 animate-fade-in">
+            {% for message in messages %}
+            <div class="p-4 rounded-2xl font-sans text-sm {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% else %}bg-emerald-50 border border-emerald-200 text-emerald-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Profile Settings -->
+        <section class="mb-6 animate-slide-up">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <h2 class="font-serif text-lg text-ink-900 tracking-tight">Your Profile</h2>
+            </div>
+            <div class="bg-white border border-stone-200 rounded-3xl p-6 shadow-lg shadow-stone-100">
+                <form method="post" enctype="multipart/form-data" class="space-y-5" id="profile-form">
+                    {% csrf_token %}
+
+                    {% if profile_form.non_field_errors %}
+                    <div class="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                        {{ profile_form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Avatar -->
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center overflow-hidden border border-stone-100">
+                            {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="w-full h-full object-cover">
+                            {% else %}
+                            <span class="text-2xl font-serif text-accent">{{ user.username|slice:":1"|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ profile_form.avatar }}
+                            <label for="{{ profile_form.avatar.id_for_label }}" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-paper-100 hover:bg-stone-200 text-ink-900 text-sm font-medium rounded-xl transition-colors border border-stone-100">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Change Photo
+                            </label>
+                            <div id="avatar-filename" class="mt-2 text-xs text-ink-500"></div>
+                            {% if profile_form.avatar.errors %}
+                            <div class="mt-2 text-sm text-red-700">
+                                {{ profile_form.avatar.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Display Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-ink-900 mb-2">{{ profile_form.display_name.label }}</label>
+                        {{ profile_form.display_name }}
+                        <p class="text-xs text-ink-500 mt-1">This is how your partner will see you</p>
+                    </div>
+                    
+                    <!-- Timezone -->
+                    <div>
+                        <label class="block text-sm font-medium text-ink-900 mb-2">{{ profile_form.timezone.label }}</label>
+                        {{ profile_form.timezone }}
+                        <p class="text-xs text-ink-500 mt-1">Used to show the correct daily prompt</p>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="flex items-center gap-3 p-3 bg-paper-100 rounded-xl">
+                        {{ profile_form.notify_partner_answered }}
+                        <label class="text-sm text-ink-900">{{ profile_form.notify_partner_answered.label }}</label>
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        name="profile_submit"
+                        class="w-full py-3 px-4 bg-accent hover:bg-ink-900 text-white font-medium rounded-2xl transition-colors"
+                    >
+                        Save Profile
+                    </button>
+                </form>
+            </div>
+        </section>
+        
+        <!-- Couple Settings -->
+        {% if couple %}
+        <section class="mb-6 animate-slide-up" style="animation-delay: 0.05s;">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="font-serif text-lg text-ink-900 tracking-tight">Your Relationship</h2>
+            </div>
+            <div class="bg-white border border-stone-200 rounded-3xl p-6 shadow-lg shadow-stone-100">
+                <!-- Partner Info -->
+                {% if couple.user2 and partner %}
+                <div class="flex items-center gap-4 mb-6 pb-6 border-b border-stone-100">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
+                        {% if partner.profile.avatar %}
+                        <img src="{{ partner.profile.avatar.url }}" alt="Partner" class="w-full h-full rounded-2xl object-cover">
+                        {% else %}
+                        <span class="text-lg font-serif text-rose-600">{{ partner.username|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="font-medium text-ink-900">{{ partner.profile.name }}</p>
+                        <p class="text-sm text-ink-500">Your partner</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="mb-6 pb-6 border-b border-stone-100">
+                    <p class="font-medium text-ink-900">Partner not connected yet</p>
+                    <p class="text-sm text-ink-500">You can still update relationship info for this vault.</p>
+                </div>
+                {% endif %}
+                
+                <form method="post" class="space-y-5">
+                    {% csrf_token %}
+                    
+                    <!-- Anniversary Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-ink-900 mb-2">{{ couple_form.anniversary_date.label }}</label>
+                        {{ couple_form.anniversary_date }}
+                        <p class="text-xs text-ink-500 mt-1">Used for your year-end Wrapped</p>
+                    </div>
+
+                    <!-- Relationship Ended -->
+                    <div class="flex items-center gap-3 p-3 bg-paper-100 rounded-xl">
+                        {{ couple_form.is_ended }}
+                        <label class="text-sm text-ink-900">{{ couple_form.is_ended.label }}</label>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-ink-900 mb-2">{{ couple_form.ended_date.label }}</label>
+                        {{ couple_form.ended_date }}
+                        <p class="text-xs text-ink-500 mt-1">Optional. If ended, this vault becomes read-only.</p>
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        name="couple_submit"
+                        class="w-full py-3 px-4 bg-ink-900 hover:bg-accent text-white font-medium rounded-2xl transition-colors"
+                    >
+                        Save Relationship Info
+                    </button>
+                </form>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Vaults -->
+        {% if couples %}
+        <section class="mb-6 animate-slide-up" style="animation-delay: 0.1s;">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h2 class="font-serif text-lg text-ink-900 tracking-tight">Your Vaults</h2>
+            </div>
+            <div class="bg-white border border-stone-200 rounded-3xl divide-y divide-stone-100 overflow-hidden shadow-lg shadow-stone-100">
+                {% for c in couples %}
+                <div class="px-6 py-4 flex items-center justify-between gap-4">
+                    <div>
+                        <p class="font-medium text-ink-900">
+                            {% if c.user2 %}
+                                {{ c.user1.username }} &amp; {{ c.user2.username }}
+                            {% else %}
+                                {{ c.user1.username }} (waiting)
+                            {% endif %}
+                        </p>
+                        <p class="text-sm text-ink-500">
+                            {% if c.is_ended %}
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400"></span>
+                                    Ended · Read-only
+                                </span>
+                            {% elif c.user2 %}
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Connected
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                    Invite pending
+                                </span>
+                            {% endif %}
+                            {% if active_couple and active_couple.id == c.id %}
+                            <span class="ml-2 text-xs font-medium px-2 py-0.5 bg-accent/10 text-accent rounded-full">Active</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if not active_couple or active_couple.id != c.id %}
+                    <form action="{% url 'select_vault' c.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-xl bg-paper-100 hover:bg-stone-200 text-ink-900 transition-colors border border-stone-100">
+                            Switch
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <div class="px-6 py-4 bg-paper-100/50">
+                    <a href="{% url 'couple_setup' %}" class="text-accent hover:text-ink-900 text-sm font-medium transition-colors inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Create or join a vault
+                    </a>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+        
+        <!-- Account -->
+        <section class="animate-slide-up" style="animation-delay: 0.15s;">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-xl bg-paper-100 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-ink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="font-serif text-lg text-ink-900 tracking-tight">Account</h2>
+            </div>
+            <div class="bg-white border border-stone-200 rounded-3xl divide-y divide-stone-100 overflow-hidden shadow-lg shadow-stone-100">
+                <div class="px-6 py-4 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-ink-900">{{ user.username }}</p>
+                        <p class="text-sm text-ink-500">Username</p>
+                    </div>
+                </div>
+                <div class="px-6 py-4">
+                    <a href="{% url 'logout' %}" class="text-red-600 hover:text-red-700 text-sm font-medium transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const input = document.getElementById('id_avatar');
+    const out = document.getElementById('avatar-filename');
+    const form = document.getElementById('profile-form');
+    const submitBtn = form ? form.querySelector('button[name="profile_submit"]') : null;
+    if (!input || !form || !submitBtn) return;
+
+    input.addEventListener('change', function () {
+      const file = input.files && input.files[0];
+      if (file) {
+        // Show uploading state
+        if (out) out.textContent = `Uploading ${file.name}...`;
+        // Auto-submit by clicking the submit button (so profile_submit is included in POST)
+        submitBtn.click();
+      }
+    });
+  })();
+</script>
+{% endblock %}

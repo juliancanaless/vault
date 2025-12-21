@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}The Vault{% endblock %}</title>
+    
+    <!-- Favicon - Lock icon -->
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="The Vault">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#FDFCF8">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.svg">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts: Instrument Serif (Display) + Inter (Body) -->
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'serif': ['Instrument Serif', 'Georgia', 'serif'],
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        // Warm paper palette
+                        'paper': {
+                            50: '#FDFCF8',   // Main background, warm off-white
+                            100: '#F7F5F0', // Secondary/Hover
+                        },
+                        // Ink palette for text
+                        'ink': {
+                            900: '#1C1917', // Primary text, soft charcoal
+                            500: '#78716C', // Secondary text
+                        },
+                        // Accent: deep warm brown/burgundy
+                        'accent': '#4A3B32',
+                        // Legacy vault colors (kept for compatibility)
+                        'canvas': '#FDFCF8',
+                        'vault': {
+                            50: '#faf8f7',
+                            100: '#f5f0ed',
+                            200: '#e8ddd6',
+                            300: '#d4c4b8',
+                            400: '#b8a08d',
+                            500: '#9c8270',
+                            600: '#8a7162',
+                            700: '#725d52',
+                            800: '#5f4e46',
+                            900: '#50423c',
+                        }
+                    },
+                    borderRadius: {
+                        '3xl': '1.5rem',
+                        '4xl': '2rem',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                        'glow': 'glow 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { opacity: '0.6' },
+                            '50%': { opacity: '1' },
+                        },
+                        glow: {
+                            '0%': { opacity: '0', transform: 'scale(0.8)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Paper background */
+        body {
+            background-color: #FDFCF8;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+        
+        /* Custom scrollbar - warm tones */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4c4b8;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b8a08d;
+        }
+        
+        /* Textarea auto-resize feel */
+        textarea {
+            field-sizing: content;
+            min-height: 120px;
+            max-height: 400px;
+        }
+        
+        /* Safe area for iOS */
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        
+        /* Blur effect for partner card */
+        .partner-blur {
+            filter: blur(8px);
+            user-select: none;
+            pointer-events: none;
+        }
+        
+        /* HTMX loading states */
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-indicator {
+            display: none;
+        }
+        
+        /* Subtle noise texture overlay - "Digital Tactility" */
+        .noise-texture {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+        
+        /* Card hover glow effect */
+        .card-glow {
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(247,245,240,0.8) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .group:hover .card-glow {
+            opacity: 1;
+        }
+        
+        /* Bento card lift on hover */
+        .bento-card {
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .bento-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="font-sans bg-paper-50 text-ink-900 antialiased">
+    <!-- Noise texture overlay for "Digital Tactility" -->
+    <div class="pointer-events-none fixed inset-0 z-50 opacity-[0.03] noise-texture"></div>
+    
+    <!-- Main content -->
+    <div class="relative min-h-screen {% if user.is_authenticated %}pb-20{% endif %}">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Bottom Tab Navigation (authenticated users only) -->
+    {% if user.is_authenticated %}
+    {% include 'partials/bottom_nav.html' %}
+    {% endif %}
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

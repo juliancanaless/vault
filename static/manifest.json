@@ -1,0 +1,23 @@
+{
+    "name": "The Vault",
+    "short_name": "Vault",
+    "description": "A shared journal for couples",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#fafaf9",
+    "theme_color": "#8a7162",
+    "orientation": "portrait-primary",
+    "icons": [
+    {
+      "src": "/static/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/static/icons/apple-touch-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+    ]
+}
+

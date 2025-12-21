@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Register | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-6 py-12">
+    <div class="w-full max-w-sm">
+        <!-- Logo & Title -->
+        <div class="text-center mb-10 animate-fade-in">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-100 to-pink-100 mb-6 shadow-lg shadow-rose-100">
+                <svg class="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+            </div>
+            <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">Join The Vault</h1>
+            <p class="text-ink-500">Start your shared journey</p>
+        </div>
+        
+        <!-- Register Form -->
+        <div class="bg-white rounded-3xl border border-stone-200 shadow-lg shadow-stone-100 p-8 animate-slide-up">
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="id_username" class="block text-sm font-medium text-ink-900 mb-2">Username</label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="id_username"
+                        required
+                        autofocus
+                        class="w-full px-4 py-3 text-ink-900 bg-paper-100 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                        placeholder="Choose a username"
+                    >
+                    {% if form.username.errors %}
+                    <p class="text-red-500 text-xs mt-2">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="id_password1" class="block text-sm font-medium text-ink-900 mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        name="password1" 
+                        id="id_password1"
+                        required
+                        class="w-full px-4 py-3 text-ink-900 bg-paper-100 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                        placeholder="Create a password"
+                    >
+                    {% if form.password1.errors %}
+                    <p class="text-red-500 text-xs mt-2">{{ form.password1.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="id_password2" class="block text-sm font-medium text-ink-900 mb-2">Confirm Password</label>
+                    <input 
+                        type="password" 
+                        name="password2" 
+                        id="id_password2"
+                        required
+                        class="w-full px-4 py-3 text-ink-900 bg-paper-100 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                        placeholder="Confirm your password"
+                    >
+                    {% if form.password2.errors %}
+                    <p class="text-red-500 text-xs mt-2">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                {% if form.non_field_errors %}
+                <div class="p-4 bg-red-50 border border-red-200 rounded-2xl">
+                    <p class="text-sm text-red-600">{{ form.non_field_errors.0 }}</p>
+                </div>
+                {% endif %}
+                
+                <button 
+                    type="submit"
+                    class="w-full py-3 px-4 bg-accent hover:bg-ink-900 text-white font-medium rounded-2xl transition-colors"
+                >
+                    Create Account
+                </button>
+            </form>
+        </div>
+        
+        <!-- Login Link -->
+        <p class="text-center mt-6 text-sm text-ink-500">
+            Already have an account? 
+            <a href="{% url 'login' %}" class="font-medium text-accent hover:text-ink-900 transition-colors">
+                Sign in
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}
