@@ -120,9 +120,10 @@ WSGI_APPLICATION = 'vault.wsgi.application'
 # DATABASE - Neon.tech PostgreSQL
 # =============================================================================
 
-# Prefer DATABASE_URL when provided (production/Render/Neon).
-# For local Postgres, provide DB_NAME/DB_USER/DB_PASSWORD/DB_HOST/DB_PORT.
-# Falls back to SQLite for local development if neither is set.
+# Database configuration priority:
+# 1. DB_* variables (for local Postgres with explicit settings)
+# 2. DATABASE_URL (for production/Render/Neon.tech)
+# 3. SQLite (local development fallback)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')
@@ -130,16 +131,8 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_HOST = os.environ.get('DB_HOST', 'localhost')
 DB_PORT = os.environ.get('DB_PORT', '5432')
 
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True,
-        )
-    }
-elif DB_NAME and DB_USER and DB_PASSWORD:
+if DB_NAME and DB_USER and DB_PASSWORD:
+    # Use explicit DB_* variables (takes priority for local development)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -150,8 +143,18 @@ elif DB_NAME and DB_USER and DB_PASSWORD:
             'PORT': DB_PORT,
         }
     }
+elif DATABASE_URL:
+    # Use DATABASE_URL (for production/Render/Neon.tech)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
+    }
 else:
-    # Local development fallback
+    # Local development fallback to SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
