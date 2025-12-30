@@ -17,9 +17,7 @@ services:
       - key: ALLOWED_HOSTS
         fromHost: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: vault-db
-          property: connectionString
+        sync: false  # Neon.tech connection string - set manually in Render dashboard
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -27,9 +25,5 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
 
-databases:
-  - name: vault-db
-    databaseName: vault
-    user: vault
-    plan: free
+# Using Neon.tech database - no Render database needed
 
