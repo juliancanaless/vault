@@ -107,10 +107,19 @@ class CoupleSettingsForm(forms.ModelForm):
             }),
             'is_ended': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-vault-600 border-stone-300 rounded focus:ring-vault-500',
+                'id': 'id_is_ended',
+                'onchange': 'confirmEndRelationship(event)',
             }),
         }
         labels = {
             'anniversary_date': 'When did your relationship start?',
-            'is_ended': 'This relationship has ended (make vault read-only)',
-            'ended_date': 'When did it end? (optional)',
+            'is_ended': 'This relationship has ended',
+            'ended_date': 'When did it end?',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If relationship is ended, disable the checkbox (use reactivation button instead)
+        if self.instance and self.instance.is_ended:
+            self.fields['is_ended'].widget.attrs['disabled'] = True
+            self.fields['is_ended'].widget.attrs['style'] = 'opacity: 0.5; cursor: not-allowed;'

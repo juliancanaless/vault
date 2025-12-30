@@ -31,6 +31,7 @@ urlpatterns = [
     
     # Settings
     path('settings/', views.settings_view, name='settings'),
+    path('settings/archived-sparks/', views.archived_sparks_view, name='archived_sparks'),
     
     # Wrapped
     path('wrapped/', views.wrapped_view, name='wrapped'),
@@ -40,4 +41,7 @@ urlpatterns = [
     path('spark/', views.spark_index, name='spark_index'),
     path('spark/<str:category>/', views.spark_card, name='spark_card'),
     path('spark/<str:category>/next/', views.spark_next, name='spark_next'),
+    path('spark/<str:category>/prev/', views.spark_prev, name='spark_prev'),
+    path('spark/<int:spark_id>/archive/', views.spark_archive, name='spark_archive'),
+    path('spark/<int:spark_id>/unarchive/', views.spark_unarchive, name='spark_unarchive'),
 ]

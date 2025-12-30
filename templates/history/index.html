@@ -7,7 +7,7 @@
     <main class="px-6 pt-8 pb-8 max-w-lg mx-auto">
         <!-- Title Section -->
         <div class="text-center mb-8 animate-fade-in">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 mb-4">
+            <div class="icon-container inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 mb-4">
                 <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
@@ -15,6 +15,57 @@
             <h1 class="font-serif text-3xl text-ink-900 tracking-tight mb-2">History</h1>
             <p class="text-ink-500">Your story together</p>
         </div>
+        
+        {% if messages %}
+        <div class="space-y-2 mb-6 animate-fade-in">
+            {% for message in messages %}
+            <div class="p-4 rounded-2xl font-sans text-sm {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% elif message.tags == 'warning' %}bg-amber-50 border border-amber-200 text-amber-700{% else %}bg-emerald-50 border border-emerald-200 text-emerald-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if couple and couple.is_ended %}
+        <!-- Vault Ended Banner -->
+        <div class="mb-6 animate-slide-up">
+            <div class="bg-stone-50 border border-stone-200 rounded-3xl p-6 shadow-lg shadow-stone-100">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-serif text-lg text-ink-900 tracking-tight mb-2">This vault is read-only</h3>
+                        <p class="text-sm text-ink-600 mb-4">This relationship has been marked as ended. You can still view your history, but new entries cannot be added.</p>
+                        {% if couple.has_pending_reactivation %}
+                            {% if couple.reactivation_requested_by == user %}
+                                <p class="text-sm text-ink-500 mb-4">You've requested to reactivate. Waiting for your partner to approve.</p>
+                            {% else %}
+                                <p class="text-sm text-ink-500 mb-4">Your partner has requested to reactivate. Visit Settings to approve.</p>
+                            {% endif %}
+                        {% endif %}
+                        <div class="flex flex-wrap gap-3">
+                            <a href="{% url 'couple_setup' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-ink-900 text-white text-sm font-medium rounded-xl transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Create or Join New Vault
+                            </a>
+                            <a href="{% url 'settings' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-paper-100 hover:bg-stone-200 text-ink-900 text-sm font-medium rounded-xl transition-colors border border-stone-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- Stats Card -->
         <div class="mb-8 animate-slide-up">

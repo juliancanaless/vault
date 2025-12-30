@@ -15,10 +15,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.core.paginator import Paginator
+from django.db.models import Q
 
-from .models import Prompt, Entry, Couple, Spark, SparkCategory
+from .models import Prompt, Entry, Couple, Spark, SparkCategory, SparkPreference
 from .forms import EntryForm, ProfileForm, CoupleSettingsForm
 from .analytics import CoupleAnalytics
 
@@ -231,8 +233,9 @@ def daily_journal(request):
     # Get partner for display
     partner = couple.get_partner(request.user)
     
-    # Get today's prompt
-    prompt = Prompt.get_todays_prompt()
+    # Get today's prompt using couple's shared timezone
+    couple_tz = getattr(couple, 'timezone', 'UTC')
+    prompt = Prompt.get_todays_prompt(couple_tz)
     
     if not prompt:
         # No prompt for today - show empty state
@@ -276,11 +279,17 @@ def submit_entry(request):
     Handle journal entry submission via HTMX.
     Returns updated journal state partial.
     """
-    prompt = Prompt.get_todays_prompt()
-    
     couple = request.user.profile.active_couple
+    
     if not couple or not couple.includes_user(request.user) or not couple.user2:
         return HttpResponse('<p class="text-red-500">Please connect to a partner first.</p>')
+    
+    if getattr(couple, 'is_ended', False):
+        return HttpResponse('<p class="text-amber-500">This vault is read-only.</p>')
+    
+    # Get today's prompt using couple's shared timezone
+    couple_tz = getattr(couple, 'timezone', 'UTC')
+    prompt = Prompt.get_todays_prompt(couple_tz)
     if getattr(couple, 'is_ended', False):
         return HttpResponse('<p class="text-amber-500">This vault is read-only.</p>')
 
@@ -334,15 +343,17 @@ def check_partner_status(request):
     HTMX endpoint to check if partner has answered.
     Used for polling to auto-unlock when partner responds.
     """
-    prompt = Prompt.get_todays_prompt()
-    
-    if not prompt:
-        return HttpResponse('')
-
     couple = request.user.profile.active_couple
     if not couple or not couple.includes_user(request.user):
         return HttpResponse('')
     if getattr(couple, 'is_ended', False):
+        return HttpResponse('')
+    
+    # Get today's prompt using couple's shared timezone
+    couple_tz = getattr(couple, 'timezone', 'UTC')
+    prompt = Prompt.get_todays_prompt(couple_tz)
+    
+    if not prompt:
         return HttpResponse('')
     
     user_entry = Entry.get_user_entry_for_prompt(request.user, prompt, couple)
@@ -392,17 +403,58 @@ def settings_view(request):
     else:
         profile_form = ProfileForm(instance=request.user.profile)
     
+    # Handle reactivation request
+    if request.method == 'POST' and 'request_reactivation' in request.POST:
+        if couple and couple.is_ended:
+            success, msg = couple.request_reactivation(request.user)
+            if success:
+                messages.success(request, msg)
+            else:
+                messages.info(request, msg)
+            return redirect('settings')
+    
     # Couple settings form
     if request.method == 'POST' and 'couple_submit' in request.POST:
         couple_form = CoupleSettingsForm(request.POST, instance=couple)
         if couple_form.is_valid():
-            couple_form.save()
-            messages.success(request, 'Couple settings updated!')
+            # Check if user is trying to end the relationship
+            if couple and not couple.is_ended and couple_form.cleaned_data.get('is_ended'):
+                # Ending relationship - just save it (one person can end)
+                # Clear any pending reactivation requests
+                couple.reactivation_requested_by = None
+                couple_form.save()
+                messages.success(request, 'Relationship marked as ended. The vault is now read-only.')
+            elif couple and couple.is_ended:
+                # Vault is ended - don't allow changing is_ended via form (it's disabled)
+                # Only allow updating anniversary_date and ended_date
+                # Disabled fields don't submit, so is_ended won't be in cleaned_data
+                # Save other fields (anniversary_date, ended_date)
+                couple.anniversary_date = couple_form.cleaned_data.get('anniversary_date')
+                couple.ended_date = couple_form.cleaned_data.get('ended_date')
+                couple.save(update_fields=['anniversary_date', 'ended_date'])
+                messages.success(request, 'Couple settings updated!')
+            else:
+                # Normal update (anniversary, ended_date, etc.)
+                couple_form.save()
+                messages.success(request, 'Couple settings updated!')
             return redirect('settings')
         else:
             messages.error(request, 'Could not update relationship settings. Please fix the highlighted fields and try again.')
     else:
         couple_form = CoupleSettingsForm(instance=couple) if couple else None
+    
+    # Check reactivation status
+    reactivation_pending = False
+    reactivation_requested_by_partner = False
+    if couple and couple.has_pending_reactivation():
+        reactivation_pending = True
+        reactivation_requested_by_partner = (couple.reactivation_requested_by != request.user)
+
+    # Spark preferences (archived sparks) - just a count here; full list is a dedicated page
+    archived_sparks_count = SparkPreference.objects.filter(
+        user=request.user,
+        is_archived=True
+    ).count()
     
     context = {
         'profile_form': profile_form,
@@ -412,9 +464,53 @@ def settings_view(request):
         'couples': couples,
         'active_couple': couple,
         'active_tab': 'settings',
+        'reactivation_pending': reactivation_pending,
+        'reactivation_requested_by_partner': reactivation_requested_by_partner,
+        'archived_sparks_count': archived_sparks_count,
     }
     
     return render(request, 'settings/index.html', context)
+
+
+@login_required
+def archived_sparks_view(request):
+    """
+    Archived Sparks page: searchable/filterable list of archived sparks with unarchive controls.
+    """
+    q = (request.GET.get('q') or '').strip()
+    category = (request.GET.get('category') or '').strip()
+
+    qs = SparkPreference.objects.filter(
+        user=request.user,
+        is_archived=True
+    ).select_related('spark').order_by('-updated_at')
+
+    valid_categories = [c[0] for c in SparkCategory.choices]
+    if category in valid_categories:
+        qs = qs.filter(spark__category=category)
+    else:
+        category = ''
+
+    if q:
+        qs = qs.filter(
+            Q(spark__text__icontains=q) |
+            Q(spark__subtitle__icontains=q) |
+            Q(spark__option_b__icontains=q)
+        )
+
+    paginator = Paginator(qs, 25)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'active_tab': 'settings',
+        'q': q,
+        'category': category,
+        'categories': SparkCategory.choices,
+        'page_obj': page_obj,
+        'total_count': paginator.count,
+    }
+
+    return render(request, 'settings/archived_sparks.html', context)
 
 
 # =============================================================================
@@ -465,6 +561,8 @@ def entry_history(request):
         'partner': partner,
         'total_entries': len(entries_with_partner),
         'active_tab': 'history',
+        'couple': couple,
+        'user': request.user,
     }
     
     return render(request, 'history/index.html', context)
@@ -568,6 +666,16 @@ def spark_index(request):
     Spark landing page - shows category cards to choose from.
     This is the 'together mode' counterpart to the async daily journal.
     """
+    # Check if user has an active vault that's not ended
+    couple = request.user.profile.active_couple
+    if not couple or not couple.includes_user(request.user) or not couple.user2:
+        messages.info(request, 'Please connect with a partner to access Sparks.')
+        return redirect('couple_setup')
+    
+    if getattr(couple, 'is_ended', False):
+        messages.info(request, 'Sparks are not available for ended relationships. The vault is read-only.')
+        return redirect('entry_history')
+    
     # Get counts per category for display
     category_counts = Spark.get_category_counts()
     
@@ -621,6 +729,14 @@ def spark_card(request, category):
     Show a random spark card from the given category.
     Used both for initial page load and HTMX refreshes.
     """
+    # Check if user has an active vault that's not ended
+    couple = request.user.profile.active_couple
+    if not couple or not couple.includes_user(request.user) or not couple.user2:
+        return redirect('couple_setup')
+    
+    if getattr(couple, 'is_ended', False):
+        return redirect('entry_history')
+    
     # Validate category
     valid_categories = [c[0] for c in SparkCategory.choices]
     if category not in valid_categories:
@@ -629,8 +745,23 @@ def spark_card(request, category):
     # Get optional vibe filter from query params
     vibe = request.GET.get('vibe')
     
-    # Get a random spark
-    spark = Spark.get_random(category=category, vibe=vibe)
+    # Initialize session history for this category if not exists
+    history_key = f'spark_history_{category}'
+    if history_key not in request.session:
+        request.session[history_key] = []
+    
+    # Get a random spark (excluding archived ones for this user)
+    exclude_ids = request.session.get(history_key, [])[-10:]  # Avoid last 10 seen
+    spark = Spark.get_random(category=category, vibe=vibe, user=request.user, exclude_ids=exclude_ids)
+    
+    # If spark exists, add to history (limit to last 20)
+    if spark:
+        history = request.session[history_key]
+        if spark.id not in history:
+            history.append(spark.id)
+        # Keep only last 20 cards
+        request.session[history_key] = history[-20:]
+        request.session.modified = True
     
     # Category display info
     category_info = {
@@ -640,12 +771,23 @@ def spark_card(request, category):
         SparkCategory.GAME: {'name': 'Quick Games', 'color': 'emerald'},
     }
     
+    # Check if current spark is archived
+    is_archived = False
+    if spark:
+        pref = SparkPreference.objects.filter(user=request.user, spark=spark).first()
+        is_archived = pref.is_archived if pref else False
+    
+    # Check if there's history for back navigation
+    has_history = len(request.session.get(history_key, [])) > 1
+    
     context = {
         'spark': spark,
         'category': category,
         'category_info': category_info.get(category, {}),
         'vibe': vibe,
         'active_tab': 'spark',
+        'is_archived': is_archived,
+        'has_history': has_history,
     }
     
     # If HTMX request, return just the card partial
@@ -661,8 +803,31 @@ def spark_next(request, category):
     HTMX endpoint to get the next random spark card.
     Returns just the card partial for swapping.
     """
+    # Check if user has an active vault that's not ended
+    couple = request.user.profile.active_couple
+    if not couple or not couple.includes_user(request.user) or not couple.user2:
+        return HttpResponse('<p class="text-red-500">Please connect with a partner first.</p>')
+    
+    if getattr(couple, 'is_ended', False):
+        return HttpResponse('<p class="text-amber-500">Sparks are not available for ended relationships.</p>')
+    
     vibe = request.GET.get('vibe')
-    spark = Spark.get_random(category=category, vibe=vibe)
+    
+    # Get current spark ID from session if exists (to avoid showing same card)
+    history_key = f'spark_history_{category}'
+    history = request.session.get(history_key, [])
+    
+    # Get a random spark (excluding archived and recent ones)
+    exclude_ids = history[-10:] if history else []  # Avoid last 10 seen
+    spark = Spark.get_random(category=category, vibe=vibe, user=request.user, exclude_ids=exclude_ids)
+    
+    # Add to history if spark exists
+    if spark:
+        if spark.id not in history:
+            history.append(spark.id)
+        # Keep only last 20 cards
+        request.session[history_key] = history[-20:]
+        request.session.modified = True
     
     category_info = {
         SparkCategory.DATE: {'name': 'Date Ideas', 'color': 'rose'},
@@ -671,11 +836,171 @@ def spark_next(request, category):
         SparkCategory.GAME: {'name': 'Quick Games', 'color': 'emerald'},
     }
     
+    # Check if current spark is archived
+    is_archived = False
+    if spark:
+        pref = SparkPreference.objects.filter(user=request.user, spark=spark).first()
+        is_archived = pref.is_archived if pref else False
+    
+    # Check if there's history for back navigation (at least 2 items)
+    has_history = len(history) > 1
+    
     context = {
         'spark': spark,
         'category': category,
         'category_info': category_info.get(category, {}),
         'vibe': vibe,
+        'is_archived': is_archived,
+        'has_history': has_history,
     }
     
-    return render(request, 'spark/partials/card.html', context)
+    # Render card partial
+    card_html = render(request, 'spark/partials/card.html', context).content.decode('utf-8')
+    
+    # Render actions partial with out-of-band swap
+    actions_html = render(request, 'spark/partials/actions.html', context).content.decode('utf-8')
+    
+    # Combine with out-of-band swap marker
+    response_content = card_html + f'<div id="spark-actions" hx-swap-oob="innerHTML">{actions_html}</div>'
+    
+    return HttpResponse(response_content)
+
+
+@login_required
+def spark_prev(request, category):
+    """
+    HTMX endpoint to get the previous spark card from history.
+    Returns just the card partial for swapping.
+    """
+    # Check if user has an active vault that's not ended
+    couple = request.user.profile.active_couple
+    if not couple or not couple.includes_user(request.user) or not couple.user2:
+        return HttpResponse('<p class="text-red-500">Please connect with a partner first.</p>')
+    
+    if getattr(couple, 'is_ended', False):
+        return HttpResponse('<p class="text-amber-500">Sparks are not available for ended relationships.</p>')
+    
+    vibe = request.GET.get('vibe')
+    
+    # Get history and pop the last item (current card)
+    history_key = f'spark_history_{category}'
+    history = request.session.get(history_key, [])
+    
+    if len(history) < 2:
+        # Not enough history, return error
+        return HttpResponse('<p class="text-ink-500">No previous card available.</p>')
+    
+    # Remove current card from history and get previous
+    history.pop()  # Remove current
+    previous_spark_id = history[-1] if history else None
+    
+    spark = None
+    if previous_spark_id:
+        try:
+            spark = Spark.objects.get(id=previous_spark_id)
+        except Spark.DoesNotExist:
+            history.pop()  # Remove invalid ID
+            request.session[history_key] = history
+            request.session.modified = True
+    
+    # Update session with modified history
+    request.session[history_key] = history
+    request.session.modified = True
+    
+    category_info = {
+        SparkCategory.DATE: {'name': 'Date Ideas', 'color': 'rose'},
+        SparkCategory.CONVO: {'name': 'Conversation', 'color': 'violet'},
+        SparkCategory.WYR: {'name': 'Would You Rather', 'color': 'amber'},
+        SparkCategory.GAME: {'name': 'Quick Games', 'color': 'emerald'},
+    }
+    
+    # Check if current spark is archived
+    is_archived = False
+    if spark:
+        pref = SparkPreference.objects.filter(user=request.user, spark=spark).first()
+        is_archived = pref.is_archived if pref else False
+    
+    # Check if there's more history
+    has_history = len(history) > 1
+    
+    context = {
+        'spark': spark,
+        'category': category,
+        'category_info': category_info.get(category, {}),
+        'vibe': vibe,
+        'is_archived': is_archived,
+        'has_history': has_history,
+    }
+    
+    # Render card partial
+    card_html = render(request, 'spark/partials/card.html', context).content.decode('utf-8')
+    
+    # Render actions partial with out-of-band swap
+    actions_html = render(request, 'spark/partials/actions.html', context).content.decode('utf-8')
+    
+    # Combine with out-of-band swap marker (HTMX will swap actions into #spark-actions)
+    response_content = card_html + f'<div id="spark-actions" hx-swap-oob="innerHTML">{actions_html}</div>'
+    
+    return HttpResponse(response_content)
+
+
+@login_required
+@require_http_methods(["POST"])
+def spark_archive(request, spark_id):
+    """
+    Archive a spark for the current user.
+    Returns JSON response.
+    """
+    try:
+        spark = Spark.objects.get(id=spark_id)
+    except Spark.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Spark not found'}, status=404)
+    
+    # Get or create preference
+    pref, created = SparkPreference.objects.get_or_create(
+        user=request.user,
+        spark=spark,
+        defaults={'is_archived': True}
+    )
+    
+    if not created:
+        pref.is_archived = True
+        pref.save()
+    
+    return JsonResponse({'success': True, 'archived': True})
+
+
+@login_required
+@require_http_methods(["POST"])
+def spark_unarchive(request, spark_id):
+    """
+    Unarchive a spark for the current user.
+    Returns JSON response.
+    """
+    try:
+        spark = Spark.objects.get(id=spark_id)
+    except Spark.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Spark not found'}, status=404)
+    
+    # Get or create preference
+    pref, created = SparkPreference.objects.get_or_create(
+        user=request.user,
+        spark=spark,
+        defaults={'is_archived': False}
+    )
+    
+    if not created:
+        pref.is_archived = False
+        pref.save()
+
+    # HTMX: allow in-page removal of an item (e.g. settings list)
+    if request.headers.get('HX-Request'):
+        return HttpResponse('')
+
+    # Browser form submit: redirect back to settings with a message
+    accept = request.headers.get('Accept', '')
+    if 'text/html' in accept:
+        messages.success(request, 'Spark unarchived.')
+        return redirect('settings')
+    
+    return JsonResponse({'success': True, 'archived': False})

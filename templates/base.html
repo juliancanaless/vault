@@ -184,6 +184,39 @@
         .bento-card:hover {
             transform: translateY(-2px);
         }
+        
+        /* Ensure icon container gradient persists in all browsers */
+        .icon-container {
+            position: relative;
+        }
+        .icon-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 1rem;
+            z-index: 0;
+            pointer-events: none;
+        }
+        /* Spark gradient */
+        .icon-container.bg-gradient-to-br.from-amber-100.to-rose-100::before {
+            background: linear-gradient(to bottom right, rgb(254 243 199), rgb(255 228 230));
+        }
+        /* Settings gradient */
+        .icon-container.bg-gradient-to-br.from-stone-100.to-stone-200::before {
+            background: linear-gradient(to bottom right, rgb(245 245 244), rgb(231 229 228));
+        }
+        /* Journal gradient */
+        .icon-container.bg-gradient-to-br.from-violet-100.to-indigo-100::before {
+            background: linear-gradient(to bottom right, rgb(237 233 254), rgb(224 231 255));
+        }
+        /* History gradient */
+        .icon-container.bg-gradient-to-br.from-emerald-100.to-teal-100::before {
+            background: linear-gradient(to bottom right, rgb(209 250 229), rgb(204 251 241));
+        }
+        .icon-container svg {
+            position: relative;
+            z-index: 1;
+        }
     </style>
     
     {% block extra_head %}{% endblock %}

@@ -1,6 +1,29 @@
 {% if spark %}
 <div class="w-full animate-fade-in">
-    <div class="bg-white border border-stone-200 rounded-3xl p-8 relative overflow-hidden shadow-lg shadow-stone-100">
+    <div id="spark-card-inner" class="bg-white border border-stone-200 rounded-3xl p-8 relative overflow-hidden shadow-lg shadow-stone-100 transition-transform transition-opacity duration-200">
+        <!-- Archive/Hide button (top right) -->
+        <button
+            id="archive-btn-{{ spark.id }}"
+            data-archived="{{ is_archived|yesno:'true,false' }}"
+            data-archive-btn="true"
+            data-spark-id="{{ spark.id }}"
+            class="absolute top-4 right-4 p-2 rounded-full hover:bg-paper-100 transition-colors z-10"
+            title="{{ is_archived|yesno:'Unarchive,Archive' }}"
+            aria-label="{{ is_archived|yesno:'Unarchive,Archive' }}"
+        >
+            {% if is_archived %}
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7m16 0H4"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11v6m0 0l-2-2m2 2l2-2"></path>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7m16 0H4"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 17v-6m0 0l-2 2m2-2l2 2"></path>
+            </svg>
+            {% endif %}
+        </button>
+        
         <!-- Vibe badge -->
         <div class="flex items-center justify-center mb-6">
             <span class="text-xs font-medium px-3 py-1 rounded-full bg-paper-100 text-ink-500 border border-stone-100 uppercase tracking-wider">

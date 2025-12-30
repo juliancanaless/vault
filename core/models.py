@@ -121,6 +121,14 @@ class Couple(models.Model):
         blank=True,
         help_text="When did your relationship start?"
     )
+    
+    # Shared timezone for the couple (ensures both users see same "today")
+    # Defaults to the timezone that reaches midnight later (gives grace period)
+    timezone = models.CharField(
+        max_length=50,
+        default='UTC',
+        help_text="Shared timezone for determining daily prompts (both users see same 'today')"
+    )
 
     # Relationship ended (vault can outlive the couple)
     is_ended = models.BooleanField(
@@ -132,6 +140,16 @@ class Couple(models.Model):
         null=True,
         blank=True,
         help_text="Optional: when the relationship ended"
+    )
+    
+    # Reactivation requires both parties to approve
+    reactivation_requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reactivation_requests',
+        help_text="User who requested to reactivate this ended relationship"
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -150,6 +168,27 @@ class Couple(models.Model):
         if not self.invite_code:
             import secrets
             self.invite_code = secrets.token_urlsafe(8)
+        
+        # Update timezone based on user profiles
+        # If both users exist, use later-midnight logic; otherwise use user1's timezone
+        if self.user1 and hasattr(self.user1, 'profile'):
+            tz1 = getattr(self.user1.profile, 'timezone', 'UTC')
+            
+            if self.user2 and hasattr(self.user2, 'profile'):
+                # Both users exist - use later-midnight logic
+                tz2 = getattr(self.user2.profile, 'timezone', 'UTC')
+                if tz1 != tz2:
+                    self.timezone = self.get_later_midnight_timezone(tz1, tz2)
+                else:
+                    self.timezone = tz1
+            else:
+                # Only user1 exists - use their timezone
+                self.timezone = tz1
+        else:
+            # Fallback to UTC if user1 profile doesn't exist
+            if not self.timezone:
+                self.timezone = 'UTC'
+        
         super().save(*args, **kwargs)
     
     def get_partner(self, user):
@@ -163,6 +202,43 @@ class Couple(models.Model):
     def includes_user(self, user):
         """Check if this couple includes the given user."""
         return user == self.user1 or user == self.user2
+    
+    def has_pending_reactivation(self):
+        """Check if there's a pending reactivation request."""
+        return self.is_ended and self.reactivation_requested_by is not None
+    
+    def request_reactivation(self, user):
+        """
+        Request to reactivate an ended relationship.
+        Returns (success, message).
+        If partner has already requested, auto-reactivates.
+        """
+        if not self.is_ended:
+            return False, "This relationship is not ended."
+        
+        if not self.includes_user(user):
+            return False, "You don't have permission to reactivate this relationship."
+        
+        partner = self.get_partner(user)
+        if not partner:
+            return False, "No partner found."
+        
+        # If partner already requested, auto-reactivate
+        if self.reactivation_requested_by == partner:
+            self.is_ended = False
+            self.reactivation_requested_by = None
+            self.ended_date = None
+            self.save()
+            return True, "Relationship reactivated! Both parties approved."
+        
+        # If same user requests again, just confirm
+        if self.reactivation_requested_by == user:
+            return False, "You've already requested reactivation. Waiting for your partner to approve."
+        
+        # First request - set the requester
+        self.reactivation_requested_by = user
+        self.save()
+        return True, "Reactivation requested. Your partner needs to approve to reactivate."
 
     @classmethod
     def get_couples_for_user(cls, user):
@@ -179,10 +255,63 @@ class Couple(models.Model):
         ).first()
     
     @classmethod
+    def get_later_midnight_timezone(cls, tz1, tz2):
+        """
+        Determine which timezone reaches midnight later in absolute UTC time.
+        Returns the timezone that gives the earlier timezone user a grace period.
+        
+        Example: EST (UTC-5) vs PST (UTC-8) -> returns PST (reaches midnight 3h later in UTC)
+        Logic: The timezone that is "behind" (more negative UTC offset) reaches midnight later.
+        """
+        try:
+            import pytz
+            from datetime import datetime, timedelta
+            
+            # Get current UTC time
+            now_utc = datetime.now(pytz.UTC)
+            
+            # Convert to both timezones
+            tz1_obj = pytz.timezone(tz1)
+            tz2_obj = pytz.timezone(tz2)
+            
+            time1 = now_utc.astimezone(tz1_obj)
+            time2 = now_utc.astimezone(tz2_obj)
+            
+            # Calculate when the next midnight occurs in UTC for each timezone
+            # Get today's midnight in each timezone, then add 1 day if we've passed it
+            today_midnight_1 = time1.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_midnight_2 = time2.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            # If we've passed midnight today, use tomorrow's midnight
+            if time1 > today_midnight_1:
+                next_midnight_1 = today_midnight_1 + timedelta(days=1)
+            else:
+                next_midnight_1 = today_midnight_1
+            
+            if time2 > today_midnight_2:
+                next_midnight_2 = today_midnight_2 + timedelta(days=1)
+            else:
+                next_midnight_2 = today_midnight_2
+            
+            # Convert back to UTC to compare absolute times
+            next_midnight_1_utc = next_midnight_1.astimezone(pytz.UTC)
+            next_midnight_2_utc = next_midnight_2.astimezone(pytz.UTC)
+            
+            # Return the timezone whose next midnight occurs later in UTC
+            if next_midnight_2_utc > next_midnight_1_utc:
+                return tz2
+            else:
+                return tz1
+        except Exception:
+            # Fallback: if timezone comparison fails, use first timezone
+            return tz1
+    
+    @classmethod
     def join_with_code(cls, user, invite_code):
         """
         Join an existing couple using an invite code.
         Returns (couple, error_message).
+        Automatically sets couple timezone to the later-midnight timezone.
         """
         try:
             couple = cls.objects.get(invite_code=invite_code)
@@ -196,6 +325,16 @@ class Couple(models.Model):
             return None, "You can't join your own couple"
         
         couple.user2 = user
+        
+        # Set timezone to the one that reaches midnight later (gives grace period)
+        tz1 = getattr(couple.user1.profile, 'timezone', 'UTC')
+        tz2 = getattr(user.profile, 'timezone', 'UTC')
+        
+        if tz1 != tz2:
+            couple.timezone = cls.get_later_midnight_timezone(tz1, tz2)
+        else:
+            couple.timezone = tz1
+        
         couple.save()
         return couple, None
 
@@ -254,12 +393,25 @@ class Prompt(models.Model):
         return f"[{self.get_category_display()}] {self.text[:50]}..."
     
     @classmethod
-    def get_todays_prompt(cls):
+    def get_todays_prompt(cls, tz_name='UTC'):
         """
-        Get the prompt for today, matching by month and day.
+        Get the prompt for today in the given timezone, matching by month and day.
         This allows prompts to cycle annually.
+        
+        Args:
+            tz_name: Timezone name (e.g., 'America/New_York', 'UTC')
         """
-        today = timezone.now().date()
+        try:
+            import pytz
+            from datetime import datetime
+            
+            # Get current time in the specified timezone
+            tz = pytz.timezone(tz_name)
+            today = datetime.now(tz).date()
+        except Exception:
+            # Fallback to UTC if timezone is invalid
+            today = timezone.now().date()
+        
         return cls.objects.filter(
             active_date__month=today.month,
             active_date__day=today.day
@@ -520,13 +672,31 @@ class Spark(models.Model):
         return f"[{self.get_category_display()}] {self.text[:50]}..."
     
     @classmethod
-    def get_random(cls, category=None, vibe=None):
-        """Get a random spark, optionally filtered by category and/or vibe."""
+    def get_random(cls, category=None, vibe=None, user=None, exclude_ids=None):
+        """
+        Get a random spark, optionally filtered by category and/or vibe.
+        Excludes archived sparks for the user and any IDs in exclude_ids.
+        """
         qs = cls.objects.all()
+        
         if category:
             qs = qs.filter(category=category)
         if vibe:
             qs = qs.filter(vibe=vibe)
+        
+        # Exclude archived sparks for this user
+        if user:
+            archived_ids = SparkPreference.objects.filter(
+                user=user,
+                is_archived=True
+            ).values_list('spark_id', flat=True)
+            if archived_ids:
+                qs = qs.exclude(id__in=archived_ids)
+        
+        # Exclude specific IDs (for avoiding recent cards)
+        if exclude_ids:
+            qs = qs.exclude(id__in=exclude_ids)
+        
         return qs.order_by('?').first()
     
     @classmethod
@@ -538,4 +708,41 @@ class Spark(models.Model):
                 count=Count('id')
             ).values_list('category', 'count')
         )
+
+
+class SparkPreference(models.Model):
+    """
+    User preferences for individual sparks (archived/hidden).
+    
+    Allows users to archive sparks they don't want to see again,
+    giving them control over their spark feed.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='spark_preferences',
+        db_index=True
+    )
+    spark = models.ForeignKey(
+        Spark,
+        on_delete=models.CASCADE,
+        related_name='preferences',
+        db_index=True
+    )
+    is_archived = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Hide this spark from random selection"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['user', 'spark']
+        verbose_name = 'Spark Preference'
+        verbose_name_plural = 'Spark Preferences'
+    
+    def __str__(self):
+        status = "archived" if self.is_archived else "visible"
+        return f"{self.user.username} - {self.spark} ({status})"
 

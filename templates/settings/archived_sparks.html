@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Archived Sparks | Settings | The Vault{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <!-- Top Bar -->
+    <div class="px-6 pt-6 pb-2 flex items-center justify-between">
+        <a href="{% url 'settings' %}" class="flex items-center gap-2 text-ink-500 hover:text-ink-900 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <span class="text-sm font-medium">Back</span>
+        </a>
+        <span class="text-xs font-medium px-3 py-1 rounded-full border border-stone-200 bg-paper-100 text-ink-500">
+            {{ total_count }} archived
+        </span>
+    </div>
+
+    <main class="flex-1 px-6 pb-8 pt-4 max-w-lg mx-auto w-full">
+        <div class="mb-6 animate-fade-in">
+            <h1 class="font-serif text-2xl text-ink-900 tracking-tight mb-1">Archived Sparks</h1>
+        </div>
+
+        <!-- Filters -->
+        <form method="get" class="space-y-3 mb-5">
+            <div class="bg-white border border-stone-200 rounded-2xl px-4 py-3 shadow-lg shadow-stone-100">
+                <label class="block text-xs font-medium text-ink-500 mb-2">Search</label>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ q }}"
+                    placeholder="Search by text…"
+                    class="w-full bg-paper-100 border border-stone-200 rounded-xl px-3 py-2 text-ink-900 focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                />
+            </div>
+
+            <div class="bg-white border border-stone-200 rounded-2xl px-4 py-3 shadow-lg shadow-stone-100">
+                <label class="block text-xs font-medium text-ink-500 mb-2">Category</label>
+                <select
+                    name="category"
+                    class="w-full bg-paper-100 border border-stone-200 rounded-xl px-3 py-2 text-ink-900 focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                >
+                    <option value="" {% if not category %}selected{% endif %}>All</option>
+                    {% for value,label in categories %}
+                        <option value="{{ value }}" {% if category == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button
+                type="submit"
+                class="w-full py-3 px-4 bg-accent hover:bg-ink-900 text-white font-medium rounded-2xl transition-colors"
+            >
+                Apply
+            </button>
+        </form>
+
+        <!-- List -->
+        <div class="bg-white border border-stone-200 rounded-3xl divide-y divide-stone-100 overflow-hidden shadow-lg shadow-stone-100">
+            {% if page_obj.object_list %}
+                {% for pref in page_obj.object_list %}
+                <div class="archived-spark-item px-6 py-4 flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-ink-900 uppercase tracking-wider">
+                            {{ pref.spark.get_category_display }} · {{ pref.spark.get_vibe_display }}
+                        </p>
+                        <p class="mt-1 text-sm text-ink-500">
+                            {{ pref.spark.text }}
+                        </p>
+                        {% if pref.spark.category == 'wyr' and pref.spark.option_b %}
+                        <p class="mt-2 text-xs text-ink-500">
+                            <span class="font-medium text-ink-900">Option B:</span> {{ pref.spark.option_b }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <form
+                        hx-post="{% url 'spark_unarchive' pref.spark.id %}"
+                        hx-target="closest .archived-spark-item"
+                        hx-swap="outerHTML"
+                        class="flex-shrink-0"
+                    >
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-2 text-xs font-medium rounded-xl bg-paper-100 hover:bg-stone-200 text-ink-900 transition-colors border border-stone-100">
+                            Unarchive
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="px-6 py-6 text-sm text-ink-500">
+                    No archived sparks found{% if q or category %}. Try clearing filters.{% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="mt-5 flex items-center justify-between text-sm">
+            {% if page_obj.has_previous %}
+                <a class="text-accent hover:text-ink-900 font-medium transition-colors"
+                   href="?q={{ q|urlencode }}&category={{ category }}&page={{ page_obj.previous_page_number }}">
+                    Previous page
+                </a>
+            {% else %}
+                <span class="text-ink-400">Previous page</span>
+            {% endif %}
+
+            <span class="text-ink-500">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a class="text-accent hover:text-ink-900 font-medium transition-colors"
+                   href="?q={{ q|urlencode }}&category={{ category }}&page={{ page_obj.next_page_number }}">
+                    Next page
+                </a>
+            {% else %}
+                <span class="text-ink-400">Next page</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
+
+
