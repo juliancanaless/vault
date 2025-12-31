@@ -138,6 +138,13 @@
             min-height: 120px;
             max-height: 400px;
         }
+
+        /* iOS Safari: date inputs can render wider than their container */
+        input[type="date"] {
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
         
         /* Safe area for iOS */
         .safe-bottom {
