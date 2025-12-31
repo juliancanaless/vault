@@ -1,11 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Background circle -->
-  <circle cx="16" cy="16" r="16" fill="#4A3B32"/>
-  <!-- Lock icon -->
-  <rect x="9" y="14" width="14" height="10" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
-  <path d="M12 14V11a4 4 0 0 1 8 0v3" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="180" height="180"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="#4A3B32"></rect>
+  <!-- Lock body -->
+  <rect x="55" y="85" width="70" height="55" rx="8" fill="none" stroke="white" stroke-width="6"></rect>
+  <!-- Lock shackle -->
+  <path d="M70 85V65a20 20 0 0 1 40 0v20" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"></path>
   <!-- Keyhole -->
-  <circle cx="16" cy="18" r="1.5" fill="white"/>
-  <rect x="15.25" y="18" width="1.5" height="3" rx="0.5" fill="white"/>
-</svg>
-
+  <circle cx="90" cy="105" r="8" fill="white"></circle>
+  <rect x="86" y="105" width="8" height="18" rx="3" fill="white"></rect>
+</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>
