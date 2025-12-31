@@ -99,14 +99,14 @@ class CoupleSettingsForm(forms.ModelForm):
         widgets = {
             'anniversary_date': forms.DateInput(attrs={
                 'type': 'date',
-                # Mobile browsers can render native date controls slightly wider than their container.
-                # Keep sizing defensive via Tailwind utility classes; avoid forcing appearance:none inline
-                # (it can make the calendar indicator overflow on some engines).
-                'class': 'block w-full max-w-full min-w-0 box-border px-3 py-2 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
+                # These date inputs are rendered inside a styled wrapper in the template.
+                # Keep the input itself "unstyled" (transparent + no border) to avoid
+                # mobile engines rendering a wider native control.
+                'class': 'block w-full max-w-full min-w-0 box-border bg-transparent border-0 p-0 m-0 text-sm text-stone-800 focus:ring-0 focus:outline-none',
             }),
             'ended_date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'block w-full max-w-full min-w-0 box-border px-3 py-2 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
+                'class': 'block w-full max-w-full min-w-0 box-border bg-transparent border-0 p-0 m-0 text-sm text-stone-800 focus:ring-0 focus:outline-none',
             }),
             'is_ended': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-vault-600 border-stone-300 rounded focus:ring-vault-500',
