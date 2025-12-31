@@ -115,7 +115,7 @@
                 </div>
                 <h2 class="font-serif text-lg text-ink-900 tracking-tight">Your Relationship</h2>
             </div>
-            <div class="bg-white border border-stone-200 rounded-3xl p-6 shadow-lg shadow-stone-100 overflow-hidden">
+            <div class="bg-white border border-stone-200 rounded-3xl p-6 shadow-lg shadow-stone-100">
                 <!-- Partner Info -->
                 {% if couple.user2 and partner %}
                 <div class="flex items-center gap-4 mb-6 pb-6 border-b border-stone-100">
@@ -138,11 +138,11 @@
                 </div>
                 {% endif %}
                 
-                <form method="post" class="space-y-5 w-full">
+                <form method="post" class="space-y-5">
                     {% csrf_token %}
                     
                     <!-- Anniversary Date -->
-                    <div class="overflow-hidden min-w-0">
+                    <div>
                         <label class="block text-sm font-medium text-ink-900 mb-2">{{ couple_form.anniversary_date.label }}</label>
                         {{ couple_form.anniversary_date }}
                         <p class="text-xs text-ink-500 mt-1">Used for your year-end Wrapped</p>
@@ -154,7 +154,7 @@
                         {{ couple_form.is_ended }}
                         <label for="id_is_ended" class="text-sm text-ink-900">{{ couple_form.is_ended.label }}</label>
                     </div>
-                    <div class="overflow-hidden min-w-0">
+                    <div>
                         <label class="block text-sm font-medium text-ink-900 mb-2">{{ couple_form.ended_date.label }} <span class="text-ink-400 font-normal">(optional)</span></label>
                         {{ couple_form.ended_date }}
                         <p class="text-xs text-ink-500 mt-1">If checked above, the vault becomes read-only.</p>
@@ -212,7 +212,7 @@
                     
                     {% if couple.is_ended %}
                     <!-- Show ended_date when vault is ended -->
-                    <div class="overflow-hidden min-w-0">
+                    <div>
                         <label class="block text-sm font-medium text-ink-900 mb-2">{{ couple_form.ended_date.label }} <span class="text-ink-400 font-normal">(optional)</span></label>
                         {{ couple_form.ended_date }}
                     </div>
