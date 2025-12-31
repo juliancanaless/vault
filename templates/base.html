@@ -144,6 +144,17 @@
             max-width: 100%;
             width: 100%;
             box-sizing: border-box;
+            display: block;
+            min-width: 0;
+        }
+
+        /* iOS Safari: clamp the internal date field rendering so it can't overflow */
+        input[type="date"]::-webkit-datetime-edit,
+        input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+        input[type="date"]::-webkit-date-and-time-value {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
         }
         
         /* Safe area for iOS */
