@@ -99,13 +99,14 @@ class CoupleSettingsForm(forms.ModelForm):
         widgets = {
             'anniversary_date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'block w-full px-4 py-3 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
-                'style': 'max-width: 100%; -webkit-box-sizing: border-box; box-sizing: border-box;',
+                # Mobile browsers can render native date controls slightly wider than their container.
+                # Keep sizing defensive via Tailwind utility classes; avoid forcing appearance:none inline
+                # (it can make the calendar indicator overflow on some engines).
+                'class': 'block w-full max-w-full min-w-0 box-border px-3 py-2 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
             }),
             'ended_date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'block w-full px-4 py-3 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
-                'style': 'max-width: 100%; -webkit-box-sizing: border-box; box-sizing: border-box;',
+                'class': 'block w-full max-w-full min-w-0 box-border px-3 py-2 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
             }),
             'is_ended': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-vault-600 border-stone-300 rounded focus:ring-vault-500',

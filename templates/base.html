@@ -146,6 +146,8 @@
             box-sizing: border-box;
             display: block;
             min-width: 0;
+            /* Ensure any native sub-controls can't paint outside the input box */
+            overflow: hidden;
         }
 
         /* iOS Safari: clamp the internal date field rendering so it can't overflow */
@@ -155,6 +157,13 @@
             max-width: 100%;
             overflow: hidden;
             white-space: nowrap;
+        }
+
+        /* WebKit (iOS Safari / some mobile Chromium): prevent the calendar indicator from adding extra layout width */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            margin: 0;
+            padding: 0;
+            max-width: 100%;
         }
         
         /* Safe area for iOS */
