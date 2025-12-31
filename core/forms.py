@@ -99,11 +99,13 @@ class CoupleSettingsForm(forms.ModelForm):
         widgets = {
             'anniversary_date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'block max-w-[200px] px-4 py-3 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
+                'class': 'block w-full px-4 py-3 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
+                'style': 'max-width: 100%; -webkit-box-sizing: border-box; box-sizing: border-box;',
             }),
             'ended_date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'block max-w-[200px] px-4 py-3 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
+                'class': 'block w-full px-4 py-3 text-sm text-stone-800 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-vault-500 focus:border-vault-500 transition-colors',
+                'style': 'max-width: 100%; -webkit-box-sizing: border-box; box-sizing: border-box;',
             }),
             'is_ended': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-vault-600 border-stone-300 rounded focus:ring-vault-500',
