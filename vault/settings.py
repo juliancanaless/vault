@@ -145,12 +145,14 @@ if DB_NAME and DB_USER and DB_PASSWORD:
     }
 elif DATABASE_URL:
     # Use DATABASE_URL (for production/Render/Neon.tech)
+    # Note: SSL requirements are handled by the DATABASE_URL itself (e.g., sslmode=require)
+    # Setting ssl_require=False allows the connection string to control SSL behavior
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=True,
+            ssl_require=False,  # Let DATABASE_URL connection string handle SSL (Neon includes sslmode=require)
         )
     }
 else:
